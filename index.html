@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tap Speed Test</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #cbd5e1;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #38bdf8;
+      color: #000;
+      border: none;
+      padding: 20px 50px;
+      font-size: 22px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.3s;
+    }
+    button:hover {
+      background: #7dd3fc;
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    #stats {
+      margin-top: 25px;
+      font-size: 20px;
+      color: #94a3b8;
+    }
+    #cps {
+      font-size: 28px;
+      font-weight: bold;
+      color: #38bdf8;
+    }
+    #level {
+      margin-top: 15px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    #message {
+      font-size: 22px;
+      margin-top: 10px;
+      color: #facc15;
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>⚡ Tap Speed Test ⚡</h1>
+  <p>Press <b>Enter</b> or <b>click</b> as fast as you can for <b>5 seconds</b>!</p>
+  <button id="tapButton">Start</button>
+  <div id="stats">
+    <p id="timer">Time Left: 5.00s</p>
+    <p id="cps">CPS: 0.00</p>
+    <p id="result">Ready to start!</p>
+    <p id="level"></p>
+    <p id="message"></p>
+  </div>
+  <canvas id="confetti"></canvas>
+
+  <script>
+    const button = document.getElementById('tapButton');
+    const result = document.getElementById('result');
+    const timerText = document.getElementById('timer');
+    const cpsText = document.getElementById('cps');
+    const levelText = document.getElementById('level');
+    const messageText = document.getElementById('message');
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+
+    let taps = 0, startTime = null, timer, running = false;
+    const duration = 5000; // 5 seconds
+    let confettiPieces = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function getLevel(cps) {
+      if (cps < 5) return { text: "Below Average 💤", color: "#f87171", message: "Keep practicing!" };
+      if (cps < 7) return { text: "Average 👍", color: "#fbbf24", message: "Good job!" };
+      if (cps < 9) return { text: "Intermediate ⚡", color: "#38bdf8", message: "You're getting fast!" };
+      if (cps < 11) return { text: "Pro 💪", color: "#22c55e", message: "🔥 Pro reflexes!" };
+      return { text: "Legend 🧠🔥", color: "#a855f7", message: "👑 You’re a tapping legend!" };
+    }
+
+    function startGame() {
+      taps = 0;
+      running = true;
+      button.textContent = "TAP!";
+      result.textContent = "Go go go!";
+      cpsText.textContent = "CPS: 0.00";
+      levelText.textContent = "";
+      messageText.textContent = "";
+      startTime = Date.now();
+
+      timer = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const timeLeft = Math.max(0, duration - elapsed);
+        const secondsPassed = elapsed / 1000;
+        const cps = (taps / secondsPassed).toFixed(2);
+        cpsText.textContent = `CPS: ${cps}`;
+        timerText.textContent = `Time Left: ${(timeLeft / 1000).toFixed(2)}s`;
+
+        if (timeLeft <= 0) endGame();
+      }, 50);
+    }
+
+    function endGame() {
+      running = false;
+      clearInterval(timer);
+      const cps = (taps / (duration / 1000)).toFixed(2);
+      result.textContent = `🔥 You tapped ${taps} times in 5s (${cps} CPS)!`;
+
+      const level = getLevel(parseFloat(cps));
+      levelText.textContent = `Level: ${level.text}`;
+      levelText.style.color = level.color;
+      messageText.textContent = level.message;
+
+      if (parseFloat(cps) >= 9) launchConfetti(); // confetti for Pro and Legend
+      button.textContent = "Restart";
+    }
+
+    function registerTap() {
+      if (!running) return;
+      taps++;
+    }
+
+    button.addEventListener('click', () => {
+      if (!running && button.textContent === "Start") startGame();
+      else if (button.textContent === "Restart") {
+        button.textContent = "Start";
+        result.textContent = "Ready to start!";
+        cpsText.textContent = "CPS: 0.00";
+        timerText.textContent = "Time Left: 5.00s";
+        levelText.textContent = "";
+        messageText.textContent = "";
+        confettiPieces = [];
+      } else registerTap();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Enter' || e.code === 'Space') {
+        e.preventDefault();
+        if (!running && button.textContent === "Start") startGame();
+        else if (running) registerTap();
+      }
+    });
+
+    // 🎉 Confetti animation
+    function launchConfetti() {
+      confettiPieces = [];
+      for (let i = 0; i < 200; i++) {
+        confettiPieces.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          color: `hsl(${Math.random() * 360}, 100%, 60%)`,
+          size: Math.random() * 6 + 4,
+          speed: Math.random() * 3 + 2,
+          rotation: Math.random() * 360
+        });
+      }
+      animateConfetti();
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      confettiPieces.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
+        ctx.fill();
+        p.y += p.speed;
+        p.rotation += 5;
+        if (p.y > canvas.height) p.y = -10;
+      });
+      if (confettiPieces.length > 0) requestAnimationFrame(animateConfetti);
+    }
+  </script>
+</body>
+</html>
