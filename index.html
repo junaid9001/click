@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tap Speed Test</title>
   <style>
     body {
@@ -72,8 +73,9 @@
 </head>
 <body>
   <h1>⚡ Tap Speed Test ⚡</h1>
-  <p>Press <b>Enter</b> or <b>click</b> as fast as you can for <b>5 seconds</b>!</p>
+  <p>Press <b>Enter</b> or <b>Click</b> as fast as you can for <b>5 seconds</b>!</p>
   <button id="tapButton">Start</button>
+
   <div id="stats">
     <p id="timer">Time Left: 5.00s</p>
     <p id="cps">CPS: 0.00</p>
@@ -81,6 +83,7 @@
     <p id="level"></p>
     <p id="message"></p>
   </div>
+
   <canvas id="confetti"></canvas>
 
   <script>
@@ -96,6 +99,7 @@
     let taps = 0, startTime = null, timer, running = false;
     const duration = 5000; // 5 seconds
     let confettiPieces = [];
+    let keyPressed = false;
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
@@ -145,7 +149,7 @@
       levelText.style.color = level.color;
       messageText.textContent = level.message;
 
-      if (parseFloat(cps) >= 9) launchConfetti(); // confetti for Pro and Legend
+      if (parseFloat(cps) >= 9) launchConfetti();
       button.textContent = "Restart";
     }
 
@@ -154,26 +158,38 @@
       taps++;
     }
 
+    // Mouse clicks
     button.addEventListener('click', () => {
       if (!running && button.textContent === "Start") startGame();
       else if (button.textContent === "Restart") {
-        button.textContent = "Start";
-        result.textContent = "Ready to start!";
-        cpsText.textContent = "CPS: 0.00";
-        timerText.textContent = "Time Left: 5.00s";
-        levelText.textContent = "";
-        messageText.textContent = "";
-        confettiPieces = [];
+        resetGame();
       } else registerTap();
     });
 
+    // Keyboard control (Enter / Space)
     document.addEventListener('keydown', (e) => {
-      if (e.code === 'Enter' || e.code === 'Space') {
+      if ((e.code === 'Enter' || e.code === 'Space') && !keyPressed) {
+        keyPressed = true;
         e.preventDefault();
+
         if (!running && button.textContent === "Start") startGame();
         else if (running) registerTap();
       }
     });
+
+    document.addEventListener('keyup', (e) => {
+      if (e.code === 'Enter' || e.code === 'Space') keyPressed = false;
+    });
+
+    function resetGame() {
+      button.textContent = "Start";
+      result.textContent = "Ready to start!";
+      cpsText.textContent = "CPS: 0.00";
+      timerText.textContent = "Time Left: 5.00s";
+      levelText.textContent = "";
+      messageText.textContent = "";
+      confettiPieces = [];
+    }
 
     // 🎉 Confetti animation
     function launchConfetti() {
